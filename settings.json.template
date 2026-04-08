@@ -1,0 +1,131 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat ~/.config/claude/*.json)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(node -e \":*)",
+      "Bash(echo $USERPROFILE)",
+      "Bash(echo $HOME)",
+      "Bash(node:*)"
+    ],
+    "defaultMode": "auto",
+    "additionalDirectories": [
+      "{{CLAUDE_DIR_WIN}}",
+      "{{TEMP_DIR_WIN}}"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_DIR}}/hooks/pre-git-push-guard.js",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_DIR}}/hooks/pre-destructive-git.js",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_DIR}}/hooks/pre-sensitive-files.js",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_DIR}}/hooks/pre-file-size-limit.js",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_DIR}}/hooks/pre-sensitive-files.js",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_DIR}}/hooks/session-context-inject.js",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_DIR}}/hooks/validate-json.js",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_DIR}}/hooks/post-debug-statements.js",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_DIR}}/hooks/post-auto-format.js",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_DIR}}/hooks/stop-notification.js",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": false,
+    "slidev@slidev-dev-marketplace": false,
+    "n8n-as-code@n8nac-marketplace": false
+  },
+  "extraKnownMarketplaces": {
+    "slidev-dev-marketplace": {
+      "source": {
+        "source": "directory",
+        "path": "{{CLAUDE_DIR_WIN}}\\skills\\cc-slidev"
+      }
+    },
+    "n8nac-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "EtienneLescot/n8n-as-code"
+      }
+    }
+  },
+  "effortLevel": "medium",
+  "autoUpdatesChannel": "latest",
+  "autoMemoryEnabled": true,
+  "autoDreamEnabled": true,
+  "skipAutoPermissionPrompt": false,
+  "model": "opus[1m]"
+}
