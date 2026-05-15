@@ -1,6 +1,6 @@
 ---
 name: cost-report
-description: Generate an API cost report for n8n workflows — actual usage vs budget caps. Uses n8n executions + Snowflake audit tables. Use when asked for "cost report", "relatorio de custo", "budget vs actual", "quanto gastamos", or when reviewing FinOps guardrail effectiveness.
+description: Generate an API cost report for n8n workflows — actual usage vs budget caps. Uses n8n executions + data-warehouse audit tables. Use when asked for "cost report", "relatorio de custo", "budget vs actual", "quanto gastamos", or when reviewing cost-guardrail effectiveness.
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Bash, Agent, mcp__n8n-mcp__n8n_executions, mcp__n8n-mcp__n8n_list_workflows, mcp__n8n-mcp__n8n_get_workflow
 ---
@@ -20,32 +20,21 @@ Generates a cost report comparing actual API call volumes against budget caps de
 
 ### Step 1: Identify Monitored Workflows
 
-Use the known workflow registry from CLAUDE.md:
+Build (or load from the project's CLAUDE.md / memory) a registry of the workflows the project tracks for cost. Schema:
 
-**Fraude (external API costs):**
-
-| Workflow | ID | APIs | Unit Cost Estimate |
+```
+| Workflow | n8n ID | External APIs | Unit Cost Estimate |
 |---|---|---|---|
-| PLD & CR Consultas Externas | 1A8ldEA0cXekTnfr | CAF, BDC | CAF ~R$0.50/call, BDC ~R$0.30/call |
-| Recusados AntiFraude NRT | ggjEii4WRELQJJ3s | CAF, BDC | CAF ~R$0.50, BDC ~R$0.30 |
-| Caf Resolucao 6 V2 | gO9ML1oVsdLAepiN | CAF | CAF ~R$0.50/call |
-| Consulta Renda BDC V2 | 5F70JgLOfmG91TKK | BDC | BDC ~R$0.30/call |
-| Consulta Processos CPF BDC V2 | vF2PhInvfiewTrHJ | BDC | BDC ~R$0.30/call |
-| QI Tech Investigation | Y0o9jsCDdGUq40sN | QI Tech | QI Tech ~R$0.10/call |
-| IA Anti Fraude Juiza V3 | gEe6VL3CCMSmpkDF | OpenAI | GPT ~R$0.05/call |
-| Avaliacao de Infracoes V3 | zG1FFc171aHuRjxq | CAF | CAF ~R$0.50/call |
+| <workflow-name> | <16-char id> | <vendor list> | <R$/call estimate per vendor> |
+```
 
-**FinOps (LLM costs):**
+Examples of typical categories to capture:
+- **External API consumers** (e.g., credit bureau lookups, KYC vendor calls, identity verification) — usually the highest cost-per-call.
+- **LLM consumers** (e.g., Gemini/OpenAI for classification, generation, RAG) — moderate per-call, can scale fast.
+- **Compute-heavy** (e.g., batch jobs hitting paid APIs in loops) — easy to spike unexpectedly.
 
-| Workflow | ID | APIs | Unit Cost Estimate |
-|---|---|---|---|
-| Faturamento Unico | OcTYYqo7Xt3g2DlM | Gemini | ~R$0.02/call |
-| Faturamento BDC | ki0ar3xZl99DSEgB | Gemini | ~R$0.02/call |
-| Faturamento Klubi | j3HU47G3sNKLcSV5 | Gemini | ~R$0.02/call |
-| Faturamento Pismo | xhVQMwfvgxI25rsL | Gemini | ~R$0.02/call |
-
-> **NOTE**: Unit costs are estimates. Update when actual pricing data is available.
-> Ask user for corrections on first run: "Estes custos unitarios estao corretos?"
+> **NOTE**: Unit costs are estimates. The skill should ask the user for corrections on first run: "Estes custos unitarios estao corretos?"
+> Maintain the registry in the project's CLAUDE.md or `.claude/skills/<project>-context/SKILL.md` for reuse.
 
 ### Step 2: Collect Execution Data from n8n
 
@@ -65,7 +54,7 @@ Extract per workflow:
 
 ### Step 3: Extract Budget Caps from Guardrail Nodes
 
-For each Fraude workflow, fetch the workflow and find:
+For each tracked workflow, fetch the workflow and find:
 - **Volume Gate** node: extract the threshold value (max items per execution)
 - **Budget Cap** node: extract the daily/monthly cap (from Snowflake query in the node)
 
@@ -86,36 +75,26 @@ PERIOD_DAYS = {period}
 START_DATE = (datetime.now() - timedelta(days=PERIOD_DAYS)).strftime('%Y-%m-%d')
 
 QUERIES = {{
-    "CAF Calls": f"""
+    # Example: external API call audit — adapt to your project's audit tables.
+    "External API Calls": f"""
         SELECT COUNT(*) as total_calls,
-               COUNT(DISTINCT CPF) as unique_cpfs,
-               MIN(DT_EXECUCAO) as first_call,
-               MAX(DT_EXECUCAO) as last_call
-        FROM NGCASH.SQUAD_RISK.MAT_RESOLUCAO6_CONSULTAS_N8N
-        WHERE DT_EXECUCAO >= '{{START_DATE}}'
-    """,
-    "BDC Renda Calls": f"""
-        SELECT COUNT(*) as total_calls,
-               COUNT(DISTINCT CPF) as unique_cpfs
-        FROM NGCASH.SQUAD_RISK.MAT_BDC_RENDA
-        WHERE DATA_INGESTAO >= '{{START_DATE}}'
-    """,
-    "BDC Lawsuits Calls": f"""
-        SELECT COUNT(*) as total_calls,
-               COUNT(DISTINCT CPF) as unique_cpfs
-        FROM NGCASH.SQUAD_RISK.MAT_BDC_LAWSUITS
-        WHERE DATA_INGESTAO >= '{{START_DATE}}'
+               COUNT(DISTINCT IDENTIFIER) as unique_targets,
+               MIN(EXECUTED_AT) as first_call,
+               MAX(EXECUTED_AT) as last_call
+        FROM {{YOUR_DATABASE}}.{{YOUR_SCHEMA}}.{{YOUR_API_AUDIT_TABLE}}
+        WHERE EXECUTED_AT >= '{{START_DATE}}'
     """,
     "Automation Runs": f"""
-        SELECT FLUXO_AUTOMACAO,
+        SELECT WORKFLOW_NAME,
                COUNT(*) as total_runs,
                SUM(CASE WHEN STATUS = 'SUCCESS' THEN 1 ELSE 0 END) as success,
                SUM(CASE WHEN STATUS = 'ERROR' THEN 1 ELSE 0 END) as errors
-        FROM NGCASH.SQUAD_RISK.N8N_AUTOMATION_RUNS_HISTORY
-        WHERE DT_EXECUCAO >= '{{START_DATE}}'
-        GROUP BY FLUXO_AUTOMACAO
+        FROM {{YOUR_DATABASE}}.{{YOUR_SCHEMA}}.{{YOUR_RUNS_TABLE}}
+        WHERE EXECUTED_AT >= '{{START_DATE}}'
+        GROUP BY WORKFLOW_NAME
         ORDER BY total_runs DESC
     """
+    # Add more queries per cost dimension your project tracks.
 }}
 
 print("Generated queries — connect to Snowflake and run each:")
@@ -132,26 +111,25 @@ Write the script to a temp directory (e.g., `$TMPDIR/cost_report.py` or system t
 COST REPORT — Period: <start> to <end> (<N> days)
 ===================================================
 
-FRAUDE WORKFLOWS
+EXTERNAL API WORKFLOWS
 ┌────────────────────────┬───────┬─────────┬──────────┬──────────┬───────────┐
 │ Workflow               │ Execs │ Success │ Est.Calls│ Budget   │ Est.Cost  │
 ├────────────────────────┼───────┼─────────┼──────────┼──────────┼───────────┤
-│ PLD & CR               │  NNN  │   NNN   │   NNN    │ NNN/day  │ R$ NNN.NN │
-│ Recusados AntiFraude   │  NNN  │   NNN   │   NNN    │ NNN/day  │ R$ NNN.NN │
-│ CAF Resolucao 6        │  NNN  │   NNN   │   NNN    │ NNN/day  │ R$ NNN.NN │
+│ <workflow A>           │  NNN  │   NNN   │   NNN    │ NNN/day  │ R$ NNN.NN │
+│ <workflow B>           │  NNN  │   NNN   │   NNN    │ NNN/day  │ R$ NNN.NN │
 │ ...                    │       │         │          │          │           │
 ├────────────────────────┼───────┼─────────┼──────────┼──────────┼───────────┤
-│ SUBTOTAL FRAUDE        │       │         │          │          │ R$ NNN.NN │
+│ SUBTOTAL EXTERNAL APIs │       │         │          │          │ R$ NNN.NN │
 └────────────────────────┴───────┴─────────┴──────────┴──────────┴───────────┘
 
-FINOPS WORKFLOWS (LLM)
+LLM WORKFLOWS
 ┌────────────────────────┬───────┬─────────┬──────────┬───────────┐
 │ Workflow               │ Execs │ Success │ Est.Calls│ Est.Cost  │
 ├────────────────────────┼───────┼─────────┼──────────┼───────────┤
-│ Faturamento Unico      │  NNN  │   NNN   │   NNN    │ R$ NNN.NN │
+│ <llm workflow>         │  NNN  │   NNN   │   NNN    │ R$ NNN.NN │
 │ ...                    │       │         │          │           │
 ├────────────────────────┼───────┼─────────┼──────────┼───────────┤
-│ SUBTOTAL FINOPS        │       │         │          │ R$ NNN.NN │
+│ SUBTOTAL LLM           │       │         │          │ R$ NNN.NN │
 └────────────────────────┴───────┴─────────┴──────────┴───────────┘
 
 TOTAL ESTIMATED COST: R$ NNN.NN
@@ -176,14 +154,14 @@ Based on the data, generate actionable recommendations:
 - If error rate > 5%: flag for investigation
 - If volume is consistently <50% of gate: suggest lowering gate threshold
 - If a guardrail has never triggered: verify it's properly configured
-- Compare against the March 2026 incident (R$8k CAF overspend) as baseline
+- Compare against any prior cost-incident baseline the project tracks (overspend after a guardrail miss is a useful anchor)
 
 ## Rules
 
 - **Unit costs are estimates** — always caveat this in the report
 - **n8n executions API** has limits (max ~250 per call) — batch if needed
 - **Snowflake queries** are generated but NOT executed — user runs them manually (Snowflake session rules)
-- **FLUXO_AUTOMACAO** in N8N_AUTOMATION_RUNS_HISTORY maps to workflow names, not IDs
+- **Audit tables**: replace `{YOUR_DATABASE}.{YOUR_SCHEMA}.{YOUR_*_TABLE}` placeholders with the audit tables specific to your project. Column names (`WORKFLOW_NAME`, `EXECUTED_AT`, `STATUS`, `IDENTIFIER`) are illustrative — adjust to your schema
 - **Never cache execution counts** across sessions — always query fresh data
 - For first-time runs, ask user to confirm/correct unit cost estimates
 - **Windows path encoding**: if script write fails due to special characters in the user's home path, use the system temp directory or pass path via variable

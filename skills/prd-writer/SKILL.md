@@ -34,7 +34,7 @@ If no URL is given, use `mcp__notion__notion-search` to find the page:
 ```
 notion-search: { query: "[automation name]" }
 ```
-Confirm the result is a page inside `automacoes_master` (database ID: `2ff4457c-7167-80ed-af89-d5589e336633`).
+Confirm the result is a page inside `automacoes_master` (database ID: `{{AUTOMACOES_MASTER_DB_ID}}` (configure no projeto)).
 
 ### Step 1.2: Fetch and extract
 ```
@@ -126,7 +126,7 @@ Próximos passos:
 
 | Resource | ID / URL |
 |---|---|
-| `automacoes_master` database | `2ff4457c-7167-80ed-af89-d5589e336633` |
+| `automacoes_master` database | `{{AUTOMACOES_MASTER_DB_ID}}` (configure no projeto) |
 | PRD template page | `30d4457c7167819d9890c284886531e2` |
 | Existing PRD example | `3124457c-7167-807c-9e4f-daa09d6dc397` |
 

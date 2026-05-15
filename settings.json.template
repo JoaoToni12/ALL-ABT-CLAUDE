@@ -9,6 +9,33 @@
       "Bash(echo $HOME)",
       "Bash(node:*)"
     ],
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/credentials.json)",
+      "Read(**/id_rsa)",
+      "Read(**/id_rsa.*)",
+      "Read(**/id_ed25519)",
+      "Read(**/.ssh/**)",
+      "Read(**/.aws/credentials)",
+      "Read(**/.aws/config)",
+      "Read(**/.npmrc)",
+      "Read(**/.git-credentials)",
+      "Read(**/.netrc)",
+      "Read(**/kubeconfig)",
+      "Read(**/.kube/config)",
+      "Read(**/*.pem)",
+      "Read(**/*.p12)",
+      "Read(**/*.pfx)",
+      "Read(**/*.jks)",
+      "Read(**/*.keystore)",
+      "Read(**/*.kdbx)",
+      "Bash(cat **/.env*)",
+      "Bash(cat **/credentials*)",
+      "Bash(cat **/id_rsa*)",
+      "Bash(type **/.env*)",
+      "Bash(type **/credentials*)"
+    ],
     "defaultMode": "auto",
     "additionalDirectories": [
       "{{CLAUDE_DIR_WIN}}",
@@ -29,6 +56,11 @@
             "type": "command",
             "command": "node {{CLAUDE_DIR}}/hooks/pre-destructive-git.js",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_DIR}}/hooks/pre-git-commit-n8n.js",
+            "timeout": 10
           }
         ]
       },
@@ -58,7 +90,36 @@
         ]
       },
       {
-        "matcher": ".*",
+        "matcher": "mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_DIR}}/hooks/pre-mcp-destructive.js",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_DIR}}/hooks/pre-mcp-pii-warn.js",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node {{CLAUDE_DIR}}/hooks/pre-user-prompt-pii.js",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
         "hooks": [
           {
             "type": "command",
@@ -126,6 +187,5 @@
   "autoUpdatesChannel": "latest",
   "autoMemoryEnabled": true,
   "autoDreamEnabled": true,
-  "skipAutoPermissionPrompt": false,
-  "model": "opus[1m]"
+  "skipAutoPermissionPrompt": false
 }

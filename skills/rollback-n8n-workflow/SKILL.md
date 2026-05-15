@@ -110,8 +110,8 @@ Status: ROLLED BACK / FAILED
 - **NEVER rollback without user confirmation** — always show preview first
 - **NEVER rollback active workflows without warning** — if `active: true`, warn that scheduled triggers will immediately use the old version
 - The `n8n_workflow_versions` tool auto-creates a backup before rollback — mention this to the user for reassurance
-- If the workflow is an Error Handler (`sLD6CqmllJCqSbbT`), add an extra warning: rolling back the error handler affects ALL workflow error reporting
-- For orchestrator workflows (PLD, Recusados, QI Tech), warn about subworkflow compatibility — the rolled-back orchestrator may call subworkflows that have since changed
+- If the workflow is a shared Error Handler, add an extra warning: rolling back the error handler affects ALL workflows that reference it for error reporting
+- For orchestrator workflows (those calling subworkflows via Execute Workflow), warn about subworkflow compatibility — the rolled-back orchestrator may call subworkflows that have since changed
 - If `validateBefore: true` fails, the rollback is NOT applied — report the validation errors and let the user decide
 
 ## Abort Conditions

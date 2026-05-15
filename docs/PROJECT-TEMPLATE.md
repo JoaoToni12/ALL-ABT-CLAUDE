@@ -211,18 +211,18 @@ git commit -m "chore: initialize project structure"
 
 ---
 
-## Projetos de Referencia
+## Tipos de Projeto
 
-Projetos existentes que seguem este template (dentro do setup atual):
+Este template serve para qualquer projeto de automacao / AI Builder. Exemplos do que normalmente cabe:
 
-| Projeto | Descricao | Usa n8n? | Usa Snowflake? |
-|---|---|---|---|
-| `coe-dashboard` | Dashboard React + docs de governanca | Nao | Nao |
-| `alarmes-n8n-finops` | Alertas FinOps para workflows n8n | Sim | Sim |
-| `faturamento-unico` | Automacao de faturamento | Sim | Sim |
-| `slack-modal-automacao` | Modal Slack para solicitar automacoes | Sim | Nao |
-| `ngenie` | Assistente IA interno | Sim | Sim |
-| `onboarding` | Fluxo de onboarding automatizado | Sim | Nao |
+| Tipo | Caracteristica | Setup tipico |
+|---|---|---|
+| **Dashboard/Frontend** | React/Vite, sem workflows | CLAUDE.md curto, sem `workflows/`, sem `n8nac` |
+| **Workflow n8n + Data** | Workflow + queries data warehouse | `workflows/`, n8nac inicializado, `AGENTS.md` |
+| **Workflow n8n simples** | Workflow standalone (sem data) | `workflows/` + n8nac |
+| **Ingest/Modal** | Slack/Notion modal alimenta workflow | `src/handlers/` + workflow + endpoint |
+| **AI Agent interno** | Chat/agent interno com tools | `src/agents/`, MCP config, workflow opcional |
+| **Onboarding/Flow** | Fluxo multi-step com triggers HTTP/cron | `workflows/` + state machine + storage |
 
 ---
 
@@ -230,10 +230,14 @@ Projetos existentes que seguem este template (dentro do setup atual):
 
 - **Nao duplique regras globais.** O `.claude/CLAUDE.md` do projeto deve conter apenas regras ESPECIFICAS do projeto. Regras globais (estilo, git, seguranca) ja estao no `~/.claude/CLAUDE.md`.
 
-- **Use `/plan` antes de implementar.** Para tarefas complexas, rode `/plan` primeiro. O planner agent conhece o contexto de n8n, Snowflake e FinOps.
+- **Use `/plan` antes de implementar.** Para tarefas complexas, rode `/plan` primeiro. O planner agent conhece o contexto de n8n e data warehouse.
 
-- **Use `/orchestrate` para tarefas criticas.** Encadeia planner + code-reviewer + security-reviewer + TDD para cobertura maxima.
+- **Use `/orchestrate` para tarefas criticas.** Encadeia planner (custom) + code-reviewer + security-reviewer (built-ins) + TDD.
 
-- **Mantenha workflows/ versionado.** Sempre faca `n8nac pull` antes de editar e commite o JSON atualizado. Isso permite diff, review e rollback via git.
+- **Mantenha workflows versionados.** Para projetos n8n, sempre `n8nac pull` antes de editar e commitar a `.workflow.ts` atualizada. Diff, review e rollback via git.
 
 - **Rode `/quality-gate` antes de cada commit.** Verifica lint, testes e padroes nos arquivos alterados.
+
+- **Ative `paranoid` em sessoes com PII.** Profile que adiciona PII scan no prompt e warning em MCP writes. Ver `rules/pii-handling.md`.
+
+- **Use `close-project --pause` para wrap-up nao-final.** Commit + Linear comment, sem push/PR/Slack. Use `--sync-n8n` se a sessao tocou workflows deployed.

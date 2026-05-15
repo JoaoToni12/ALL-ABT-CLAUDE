@@ -1,7 +1,7 @@
 ---
 name: verify-automation
 description: E2E verification agent for CoE n8n automations. Reads PRD/context, extracts acceptance criteria, validates workflow structure, executes tests, verifies outputs in destination systems (Slack, Notion, Linear, Snowflake), compares results vs criteria, and iterates until convergence or reports deviations.
-tools: Glob, Grep, Read, Bash, WebFetch, Agent, mcp__n8n-mcp__n8n_get_workflow, mcp__n8n-mcp__n8n_validate_workflow, mcp__n8n-mcp__n8n_test_workflow, mcp__n8n-mcp__n8n_executions, mcp__n8n-mcp__n8n_list_workflows, mcp__notion__notion-fetch, mcp__notion__notion-search, mcp__linear__get_issue, mcp__linear__list_issues, mcp__linear__list_comments
+tools: Glob, Grep, Read, Bash, WebFetch, Agent, mcp__n8n-mcp__n8n_get_workflow, mcp__n8n-mcp__n8n_validate_workflow, mcp__n8n-mcp__n8n_test_workflow, mcp__n8n-mcp__n8n_executions, mcp__n8n-mcp__n8n_list_workflows, mcp__n8n-mcp__n8n_workflow_versions, mcp__notion__notion-fetch, mcp__notion__notion-search, mcp__linear__get_issue, mcp__linear__list_issues, mcp__linear__list_comments, mcp__linear__list_documents, mcp__linear__get_document
 model: opus
 color: cyan
 ---
@@ -77,7 +77,7 @@ If execution fails → capture error, attempt diagnosis, report in Phase 6.
 
 For EACH system detected in Phase 0, verify the expected output actually arrived:
 
-**Slack**: Use `slack_get_channel_history` for the target channel. Check: message exists? Content matches expected template? Timestamp within execution window?
+**Slack**: Slack MCP is not in this agent's tool list. Ask the user to run a manual check (or `gh api` if there's a Slack archive on GitHub) and supply: did the expected message arrive in the target channel, with matching content and timestamp within the execution window? If verification is not feasible, mark MANUAL_VERIFICATION_NEEDED.
 
 **Notion**: Use `mcp__notion__notion-fetch` or `mcp__notion__notion-search`. Check: page/entry created/updated? Properties match expected values?
 

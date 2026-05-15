@@ -17,25 +17,30 @@ You are a workflow orchestrator. Chain specialized agents in sequence, passing c
 ## Predefined Workflows
 
 ### feature (planner → tdd → code-reviewer → security-reviewer)
-1. **Planner**: Break down the feature, identify files, sequence changes
-2. **TDD**: Write tests first based on the plan
-3. **Code-Reviewer**: Review the implementation for quality
-4. **Security-Reviewer**: Check for vulnerabilities in the new code
+1. **planner** (custom): Break down the feature, identify files, sequence changes
+2. **tdd** (skill): Write tests first based on the plan
+3. **code-reviewer** (built-in): Review the implementation for quality
+4. **security-reviewer** (built-in): Check for vulnerabilities in the new code
 
 ### bugfix (planner → build-error-resolver → code-reviewer)
-1. **Planner**: Analyze the bug, identify root cause
-2. **Build-Error-Resolver**: Fix the issue and verify
-3. **Code-Reviewer**: Ensure the fix is clean and doesn't regress
+1. **planner** (custom): Analyze the bug, identify root cause
+2. **build-error-resolver** (custom): Fix the issue and verify
+3. **code-reviewer** (built-in): Ensure the fix is clean and doesn't regress
 
 ### refactor (planner → code-reviewer → tdd)
-1. **Planner**: Map the refactoring scope and sequence
-2. **Code-Reviewer**: Review changes for correctness
-3. **TDD**: Ensure test coverage is maintained
+1. **planner** (custom): Map the refactoring scope and sequence
+2. **code-reviewer** (built-in): Review changes for correctness
+3. **tdd** (skill): Ensure test coverage is maintained
 
 ### security (security-reviewer → code-reviewer → planner)
-1. **Security-Reviewer**: Full security audit
-2. **Code-Reviewer**: Review security fixes for quality
-3. **Planner**: Plan remediation for remaining issues
+1. **security-reviewer** (built-in): Full security audit
+2. **code-reviewer** (built-in): Review security fixes for quality
+3. **planner** (custom): Plan remediation for remaining issues
+
+Note: `code-reviewer` and `security-reviewer` are Claude Code built-ins.
+Project-specific notes (Snowflake LIMIT, n8n credential hygiene) live in
+`rules/snowflake-python.md`, `rules/pii-handling.md`, and the relevant
+n8n rules — built-ins read those automatically.
 
 ## Execution Rules
 - Each agent receives a handoff document with: context, previous findings, modified files, open questions

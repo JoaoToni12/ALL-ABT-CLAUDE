@@ -1,6 +1,6 @@
 # Quando Usar Cada Mecanismo
 
-Guia de decisao para escolher entre Rule, Hook, Command, Agent e Skill no framework Claude Code do CoE.
+Guia de decisao para escolher entre Rule, Hook, Command, Agent e Skill no framework Claude Code.
 
 ## Arvore de Decisao
 
@@ -82,10 +82,11 @@ globs: ["**/*.py"]
 
 | Evento | Quando dispara | Input (stdin) | Pode bloquear? |
 |---|---|---|---|
-| `PreToolUse` | Antes de Bash/Read/Write/Edit | Tool name + input JSON | Sim (exit 2) |
-| `PostToolUse` | Apos Bash/Read/Write/Edit | Tool name + output JSON | Nao |
-| `Stop` | Quando Claude termina a tarefa (`stop-notification.js`) | Conversa completa | Nao |
-| `UserPromptSubmit` | Quando usuario envia prompt | Texto do prompt | Nao |
+| `PreToolUse` | Antes de qualquer tool call (Bash/Write/Edit/`mcp__*`/...) | Tool name + input JSON | Sim (exit 2 ou `permissionDecision: "deny"`/`"ask"`) |
+| `PostToolUse` | Apos tool call | Tool name + output JSON | Nao (mas pode comentar resultado) |
+| `SessionStart` | Inicio de sessao | `source: startup\|resume\|clear\|compact` | Nao (injeta contexto via `additionalContext`) |
+| `UserPromptSubmit` | Quando usuario envia prompt | Texto do prompt | Sim (bloquear ou anexar contexto — NAO reescreve) |
+| `Stop` | Quando Claude termina | Conversa completa | Nao |
 
 **Onde vive:** `~/.claude/hooks/` + registrado em `settings.json` na secao `hooks`.
 
@@ -156,10 +157,10 @@ user-invocable: true
 **Frontmatter:**
 ```markdown
 ---
-name: code-reviewer
-description: Isolated code review agent
+name: planner
+description: Planning subagent with n8n / data-warehouse / cost-control domain rules
 model: sonnet
-tools: Bash(read-only), Read, Glob, Grep, Agent
+tools: Read, Glob, Grep, WebFetch
 ---
 
 [System prompt do agent aqui]
@@ -169,9 +170,11 @@ tools: Bash(read-only), Read, Glob, Grep, Agent
 
 | Model | Custo | Quando |
 |---|---|---|
-| `haiku` | Baixo | Documentacao, formatacao, tarefas simples |
+| `haiku` | Baixo | Documentacao, formatacao, tarefas simples, file renames |
 | `sonnet` | Medio | Code review, planejamento, build fixes, seguranca |
-| `opus` | Alto | Verificacao E2E, tarefas complexas multi-sistema |
+| `opus` | Alto | Verificacao E2E, tarefas complexas multi-sistema, arquitetura |
+
+**Importante**: built-ins `code-reviewer`, `security-reviewer`, `Plan`, `Explore`, `general-purpose` NAO sao overridaveis. Para customizar, crie agent com nome diferente. v2 do framework remove os custom redundantes (code-reviewer/security-reviewer/doc-updater) — usar built-ins direto.
 
 ---
 
@@ -197,16 +200,14 @@ tools: Bash(read-only), Read, Glob, Grep, Agent
 ```markdown
 ---
 name: deploy-n8n-workflow
-description: Deploy workflow com diff, validacao e canary
-triggers:
-  - /deploy-n8n-workflow
-  - "deploy workflow"
-  - "publicar workflow"
-  - "subir workflow"
+description: Deploy workflow com diff, validacao e canary. Trigger on /deploy-n8n-workflow, "deploy", "publicar workflow", "subir workflow".
+allowed-tools: Read, Write, Bash, mcp__n8n-mcp__n8n_get_workflow
 ---
 
 [Instrucoes detalhadas + referencias]
 ```
+
+**Nota sobre triggers**: Claude faz pattern-match multilingue contra a `description`. Não há campo `triggers:` separado — listar palavras-chave/expressões diretamente na description é o canonical pattern.
 
 ---
 
@@ -235,7 +236,13 @@ triggers:
 → **Command** (`/quality-gate`) que instrui Claude a rodar linting, testes e verificacoes
 
 ### "Quero um review de seguranca isolado"
-→ **Agent** (`security-reviewer`) com model `sonnet` e tools restritas
+→ **Built-in agent** `security-reviewer` (Claude Code provê — nao precisa criar custom)
+
+### "Quero bloquear PII em prompts/MCP writes"
+→ **Hook** (`pre-user-prompt-pii.js` em UserPromptSubmit + `pre-mcp-pii-warn.js` em PreToolUse `mcp__.*`), ativos no profile `paranoid`
+
+### "Quero proteger destrutivos MCP (delete workflow, etc.)"
+→ **Hook** (`pre-mcp-destructive.js`) com matcher `mcp__.*` retornando `permissionDecision: "ask"`
 
 ### "Quero que Claude saiba configurar n8n nodes corretamente"
 → **Skill** (`n8n-node-configuration`) com documentacao de dependencias e patterns

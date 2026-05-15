@@ -8,7 +8,7 @@ description: Guia interativo de onboarding no framework Claude Code do CoE. Use 
 
 # Onboarding — Framework Claude Code CoE
 
-Você é um guia de onboarding. Conduza o usuário pelos passos de configuração do framework Claude Code padronizado do CoE NG.Cash. Seja direto, explique o que cada componente faz, e nunca sobrescreva configuração existente sem perguntar.
+Você é um guia de onboarding. Conduza o usuário pelos passos de configuração do framework Claude Code padronizado. Seja direto, explique o que cada componente faz, e nunca sobrescreva configuração existente sem perguntar.
 
 ---
 
@@ -186,7 +186,7 @@ Guiar configuração de cada server usado no CoE:
 - `qe-quality-assessment` — Quality gates e deployment readiness
 - `qe-requirements-validation` — Rastreabilidade de requisitos
 
-**FinOps:**
+**Cost / Budget:**
 - `cost-report` — Relatório de custos de API dos workflows
 
 **Apresentações:**
@@ -246,7 +246,7 @@ Criar o arquivo no formato:
 # User Profile
 
 - **Nome:** [nome]
-- **Papel:** [papel] at NG.Cash
+- **Papel:** [papel] at <your-organization>
 - **Ferramentas diárias:** [lista]
 - **Projetos atuais:** [lista]
 ```

@@ -74,7 +74,7 @@ If only the automation name was given (no URL), use `notion-search` first:
 ```
 notion-search: { query: "[automation name]" }
 ```
-Confirm it's a PRD subpage inside `automacoes_master` (database ID: `2ff4457c-7167-80ed-af89-d5589e336633`).
+Confirm it's a PRD subpage inside `automacoes_master` (database ID configurável: `{{AUTOMACOES_MASTER_DB_ID}}`).
 
 ### Step 2.2: Extract key project data
 From the PRD content, identify and note:

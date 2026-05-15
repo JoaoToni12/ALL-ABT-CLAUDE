@@ -157,9 +157,9 @@ Status: DEPLOYED / FAILED / ROLLED BACK
 ## Safety Rules
 
 - **NEVER deploy without user confirmation**
-- **NEVER deploy to Error Handler** (`sLD6CqmllJCqSbbT`) without extra warning — affects ALL workflows
+- **NEVER deploy to a shared Error Handler workflow** without extra warning — affects ALL workflows that reference it. Identify the error handler ID at the project level (project CLAUDE.md or memory).
 - If the workflow is currently `active: true` and the local JSON has `active: false`, warn that this will disable the scheduled trigger
-- If deploying an orchestrator (PLD, Recusados, QI Tech), warn about subworkflow compatibility
+- If deploying an orchestrator (workflow that calls subworkflows via Execute Workflow node), warn about subworkflow compatibility
 - If canary detects errors, recommend rollback but don't auto-rollback — user decides
 - For workflows with volume gates/budget caps, remind user to verify thresholds match production expectations
 

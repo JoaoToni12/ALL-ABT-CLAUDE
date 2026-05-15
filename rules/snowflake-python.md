@@ -28,3 +28,11 @@ Ao escrever ou executar código Python que acessa Snowflake:
 - Não disparar múltiplas queries em paralelo (threads/asyncio) sem necessidade explícita.
 - Entre execuções de scripts, aguardar confirmação do usuário antes de rodar novamente.
 - Se receber erro `390100` (locked) ou `250001` (auth fail): parar imediatamente, não tentar de novo.
+
+## Sintaxes SQL que o Snowflake não suporta (ou tem pegadinhas)
+
+- **ALTER TABLE com múltiplas colunas é suportado desde 2024.** `ALTER TABLE t ADD COLUMN a STRING, b INT` funciona. Em versões muito antigas do conector ou em compatibility mode antigo, pode falhar — fallback é um `ALTER TABLE` por coluna.
+- **VIEWs rejeitam certos padrões de subquery aninhada.** Sempre testar a query como `SELECT` standalone antes de envolver em `CREATE OR REPLACE VIEW`.
+- **QUALIFY requer window function** — não pode usar `QUALIFY ROW_NUMBER() OVER (...)` sem o `ORDER BY` completo dentro do `OVER()`.
+- **LISTAGG sem WITHIN GROUP falha** — sempre usar `LISTAGG(col, ',') WITHIN GROUP (ORDER BY col)`.
+- **Quando em dúvida sobre sintaxe Snowflake**, escrever a query e testá-la diretamente antes de embeddar em um Code node — nunca assumir que sintaxe PostgreSQL/MySQL equivalente funciona.

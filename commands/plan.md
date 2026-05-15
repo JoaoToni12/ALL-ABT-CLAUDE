@@ -28,7 +28,7 @@ You are a senior software architect. The user wants to plan an implementation be
    - **Risks**: Anything that could go wrong
    - **Open questions**: Decisions that need user input
 
-5. **Delegate Exploration**: For complex tasks, delegate codebase exploration to the custom `planner` agent (subagent_type="planner") which has domain-specific n8n/Snowflake/FinOps rules. Incorporate its output into your plan.
+5. **Delegate Exploration**: For complex tasks, delegate codebase exploration to the custom `planner` agent (subagent_type="planner") which has domain-specific n8n / data-warehouse / cost-control rules. Incorporate its output into your plan.
 
 6. **Enter Plan Mode**: After presenting the plan, enter plan mode so the user can iterate on it before implementation begins.
 
@@ -37,6 +37,6 @@ You are a senior software architect. The user wants to plan an implementation be
 - Prefer editing existing files over creating new ones
 - Keep the plan minimal — only what's needed for the current task
 - If it's a simple task (< 3 steps), say so and suggest skipping planning
-- Use the custom `planner` agent (NOT the built-in `Plan` agent) when delegating — it has project-specific domain rules for n8n MCP limitations, Snowflake session management, and FinOps threshold calibration
+- Use the custom `planner` agent (NOT the built-in `Plan` agent) when delegating — it has domain rules for n8n MCP limitations, Snowflake session management, and cost/budget threshold calibration
 
 User's request: $ARGUMENTS

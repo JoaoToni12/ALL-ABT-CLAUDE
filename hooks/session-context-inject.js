@@ -1,74 +1,71 @@
-// PreToolUse hook: Injects git context as a warning on first Bash/Read/Write call
-// Triggered on: any tool use (matcher ".*")
-// Provides: current branch, recent commits, uncommitted changes summary
-// Only fires once per session using a temp file marker
+// SessionStart hook: Injects git context once at session start.
+// Replaces the older PreToolUse-with-ppid-marker pattern with the native SessionStart event.
+// Source schema fields: session_id, hook_event_name, source ("startup"|"resume"|"clear"|"compact"), cwd, model.
 const { shouldRun } = require(require('path').join(__dirname, 'hook-profile-check'));
 const { execFileSync } = require('child_process');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
 
 let data = '';
 process.stdin.on('data', chunk => data += chunk);
 process.stdin.on('end', () => {
   try {
     const input = JSON.parse(data);
+    const source = input.source || 'startup';
+    const cwd = input.cwd || process.cwd();
 
     // Skip in minimal profile
     if (!shouldRun('session-context', 'standard').shouldRun) {
-      process.stdout.write(data);
+      process.stdout.write(JSON.stringify({ continue: true }));
       return;
     }
 
-    // Only fire once per session — use a temp marker keyed to parent PID
-    const ppid = process.ppid || 'unknown';
-    const marker = path.join(os.tmpdir(), `.claude-session-context-${ppid}`);
-
-    if (fs.existsSync(marker)) {
-      process.stdout.write(data);
+    // On compaction we don't need the context dump (it just compressed everything).
+    if (source === 'compact') {
+      process.stdout.write(JSON.stringify({ continue: true }));
       return;
     }
 
-    // Create marker (auto-cleaned on reboot since it's in tmp)
-    fs.writeFileSync(marker, String(Date.now()));
+    const runGit = (args) => {
+      try {
+        return execFileSync('git', args, {
+          cwd, encoding: 'utf8', timeout: 5000, stdio: ['pipe', 'pipe', 'pipe'],
+        }).trim();
+      } catch {
+        return '';
+      }
+    };
 
-    // Gather git context
+    // Verify we're in a git repo before spawning multiple subprocesses.
+    const inRepo = runGit(['rev-parse', '--is-inside-work-tree']);
+    if (inRepo !== 'true') {
+      process.stdout.write(JSON.stringify({ continue: true }));
+      return;
+    }
+
     const parts = [];
+    const sourceLabel = source === 'resume' ? '↻ resumed' : source === 'clear' ? '🧹 cleared' : '▶ startup';
+    parts.push(`Session ${sourceLabel}`);
 
-    try {
-      const branch = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
-        encoding: 'utf8', timeout: 5000, stdio: ['pipe', 'pipe', 'pipe'],
-      }).trim();
-      parts.push(`Branch: ${branch}`);
-    } catch {}
+    const branch = runGit(['rev-parse', '--abbrev-ref', 'HEAD']);
+    if (branch) parts.push(`Branch: ${branch}`);
 
-    try {
-      const log = execFileSync('git', ['log', '--oneline', '-5'], {
-        encoding: 'utf8', timeout: 5000, stdio: ['pipe', 'pipe', 'pipe'],
-      }).trim();
-      if (log) parts.push(`Recent commits:\n${log}`);
-    } catch {}
+    const log = runGit(['log', '--oneline', '-5']);
+    if (log) parts.push(`Recent commits:\n${log}`);
 
-    try {
-      const diff = execFileSync('git', ['diff', '--stat', 'HEAD'], {
-        encoding: 'utf8', timeout: 5000, stdio: ['pipe', 'pipe', 'pipe'],
-      }).trim();
-      if (diff) parts.push(`Uncommitted changes:\n${diff}`);
-    } catch {}
+    const diff = runGit(['diff', '--stat', 'HEAD']);
+    if (diff) parts.push(`Uncommitted changes:\n${diff}`);
 
-    try {
-      const stash = execFileSync('git', ['stash', 'list'], {
-        encoding: 'utf8', timeout: 5000, stdio: ['pipe', 'pipe', 'pipe'],
-      }).trim();
-      if (stash) parts.push(`Stashes:\n${stash}`);
-    } catch {}
+    const stash = runGit(['stash', 'list']);
+    if (stash) parts.push(`Stashes:\n${stash}`);
 
-    if (parts.length > 0) {
-      process.stderr.write(`[SESSION CONTEXT]\n${parts.join('\n\n')}\n`);
-    }
+    const additionalContext = parts.join('\n\n');
 
-    process.stdout.write(data);
+    process.stdout.write(JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: 'SessionStart',
+        additionalContext,
+      },
+    }));
   } catch (e) {
-    process.stdout.write(data);
+    process.stdout.write(JSON.stringify({ continue: true }));
   }
 });
