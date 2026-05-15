@@ -17,11 +17,14 @@ process.stdin.on('end', () => {
     const userApproved = /#\s*user-approved\b/.test(cmd);
 
     // Block hard force push (no recovery, overwrites remote).
-    if (/git\s+push\b[^#]*\s(--force|-f)\b/.test(cmd)) {
+    // Note: --force-with-lease and --force-if-includes are matched separately below
+    // so we exclude them here via negative lookahead.
+    if (/git\s+push\b[^#]*\s(--force(?!-with-lease|-if-includes)|-f)\b/.test(cmd) && !userApproved) {
       process.stderr.write(
         '[BLOCKED] Hard force push detected (--force / -f).\n' +
         'This overwrites remote history with no recovery. If you genuinely need to overwrite,\n' +
-        'use --force-with-lease (which detects unexpected upstream changes).\n'
+        'use --force-with-lease (which detects unexpected upstream changes), or re-run\n' +
+        'with `# user-approved` if hard force is truly intended.\n'
       );
       process.exit(2);
     }
