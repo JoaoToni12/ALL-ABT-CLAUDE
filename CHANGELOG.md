@@ -27,9 +27,10 @@ Segunda major release. Foco em três eixos: **segurança PII para domínios regu
 - `live-first-verification.md` — Verificar live source antes de reportar status; ordem de verificação por domínio.
 - `output-budgeting.md` — Outputs longos vão pra arquivo; lista de critérios de quando arquivar vs inline.
 
-#### Skills (4 novas, total agora 27)
+#### Skills (5 novas, total agora 28)
 - `close-project` — End-of-session ritual (absorveu `session-close`). Flags: `--sync-n8n`, `--pause`, `--draft`, `--no-slack`, `--linear`.
 - `linear-issue-create` — Criação de issue Linear scaffold (A-RICE compatible, `teamId` mandatório, PII discipline).
+- `linear-sub-issues` — Popula sub-issues de uma parent: default Backlog status, estimativas ajustadas a 1.5x produtividade AI Builder (baseline ÷ 1.5), regra de granularidade 3-7 sub-issues, herança de priority/labels/project do parent, verificação pós-criação. Aborda os 3 erros recorrentes: excesso de sub-issues, estimativas mal definidas, status criados errados.
 - `n8n-execution-debug` — Debug de execução n8n com 6 hipóteses ranqueadas (webhook 404 pós-restart, date bug segunda-feira, PII em contextSummary, schema drift, stale execution ID, Slack 403).
 - `snowflake-query` — Wrapper one-off de Snowflake query com session/auth/LIMIT discipline.
 

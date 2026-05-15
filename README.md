@@ -12,7 +12,7 @@ Framework configura Claude Code com um conjunto integrado de **regras, hooks, ag
 - **13 arquivos de regras** contextuais (rules/) com glob scoping
 - **14 hooks** de segurança e qualidade (incluindo SessionStart, UserPromptSubmit, guards MCP)
 - **3 agentes custom** com model selection (built-ins do Claude Code cobrem code-reviewer/security-reviewer/general-purpose)
-- **27 skills** domain-specific
+- **28 skills** domain-specific
 - **10 slash commands**
 - **4 profiles de hook**: `minimal`, `standard`, `strict`, `paranoid`
 - Sistema de memória persistente entre sessões
@@ -37,7 +37,7 @@ Framework configura Claude Code com um conjunto integrado de **regras, hooks, ag
 **Adicionado:**
 - Hooks MCP: `pre-mcp-destructive.js`, `pre-mcp-pii-warn.js`, `pre-user-prompt-pii.js`
 - Rules: `pii-handling`, `linear-mcp`, `gitlab-mcp`, `slack-safety`, `bash-json-safety`, `communication-protocol`, `live-first-verification`, `output-budgeting`
-- Skills: `close-project` (absorvido session-close), `linear-issue-create`, `n8n-execution-debug`, `snowflake-query`
+- Skills: `close-project` (absorvido session-close), `linear-issue-create`, `linear-sub-issues`, `n8n-execution-debug`, `snowflake-query`
 - Profile `paranoid` para sessões com dados regulados
 - `permissions.deny` em settings.json para Read em paths sensíveis (.env, .ssh, .aws, .npmrc, etc.)
 - Suporte n8nac v2.x (environments, `workspace migrate`, `setup`, `promote`)
@@ -188,7 +188,7 @@ Rules contextuais (`~/.claude/rules/`) carregam via glob:
 
 **Built-ins do Claude Code usados sem override:** `code-reviewer`, `security-reviewer`, `Plan`, `Explore`, `general-purpose`.
 
-### Skills (27 packages)
+### Skills (28 packages)
 
 | Categoria | Skills |
 |---|---|
@@ -197,7 +197,7 @@ Rules contextuais (`~/.claude/rules/`) carregam via glob:
 | **n8n diagnostics** | `n8n-execution-debug`, `n8n-mcp-tools-expert`, `n8n-validation-expert` |
 | **n8n testing** | `n8n-workflow-testing-fundamentals`, `n8n-integration-testing-patterns`, `n8n-trigger-testing-strategies` |
 | **QA** | `context-driven-testing`, `qe-iterative-loop`, `qe-quality-assessment`, `qe-requirements-validation` |
-| **MCP writes** | `linear-issue-create`, `snowflake-query` |
+| **MCP writes** | `linear-issue-create`, `linear-sub-issues`, `snowflake-query` |
 
 ### Plugins
 
