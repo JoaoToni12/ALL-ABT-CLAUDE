@@ -40,6 +40,10 @@ echo "[ok] Framework files copied"
 [ -f "$SCRIPT_DIR/CLAUDE.md" ] && cp -n "$SCRIPT_DIR/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md" 2>/dev/null || true
 echo "[ok] CLAUDE.md preserved (not overwritten if exists)"
 
+# --- Copy RTK.md (overwrite — framework-owned, not user-customized) -----------
+[ -f "$SCRIPT_DIR/RTK.md" ] && cp "$SCRIPT_DIR/RTK.md" "$CLAUDE_DIR/RTK.md"
+echo "[ok] RTK.md copied"
+
 # --- Generate settings.json from template -------------------------------------
 CLAUDE_FWD="${CLAUDE_DIR}"                                    # forward slashes
 CLAUDE_WIN="$(echo "$CLAUDE_DIR" | sed 's|/|\\\\|g')"        # double-backslash for JSON
@@ -61,9 +65,13 @@ echo ""
 echo "=== Manual steps remaining ==="
 echo "1. Run 'claude auth' to authenticate with Anthropic"
 echo "2. Configure MCP API keys (n8n, Linear, Notion) in ~/.claude/config.json"
-echo "3. Install plugins:"
+echo "3. Install RTK (Rust Token Killer) for token optimization:"
+echo "     https://github.com/JoaoToni12/rtk — follow install instructions"
+echo "4. Install plugins:"
 echo "     claude plugin marketplace add EtienneLescot/n8n-as-code"
 echo "     claude plugin install n8n-as-code@n8nac-marketplace"
-echo "4. Copy project-level CLAUDE.md to each repo as needed"
+echo "     claude plugin marketplace add Egonex-AI/Understand-Anything"
+echo "     claude plugin install understand-anything@understand-anything"
+echo "5. Copy project-level CLAUDE.md to each repo as needed"
 echo ""
 echo "Done! Framework installed to $CLAUDE_DIR"

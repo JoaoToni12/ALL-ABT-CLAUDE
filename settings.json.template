@@ -61,6 +61,10 @@
             "type": "command",
             "command": "node {{CLAUDE_DIR}}/hooks/pre-git-commit-n8n.js",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "rtk hook claude"
           }
         ]
       },
@@ -165,9 +169,10 @@
     ]
   },
   "enabledPlugins": {
-    "frontend-design@claude-plugins-official": false,
-    "slidev@slidev-dev-marketplace": false,
-    "n8n-as-code@n8nac-marketplace": false
+    "frontend-design@claude-plugins-official": true,
+    "slidev@slidev-dev-marketplace": true,
+    "n8n-as-code@n8nac-marketplace": true,
+    "understand-anything@understand-anything": true
   },
   "extraKnownMarketplaces": {
     "slidev-dev-marketplace": {
@@ -181,11 +186,19 @@
         "source": "github",
         "repo": "EtienneLescot/n8n-as-code"
       }
+    },
+    "understand-anything": {
+      "source": {
+        "source": "github",
+        "repo": "Egonex-AI/Understand-Anything"
+      }
     }
   },
   "effortLevel": "medium",
   "autoUpdatesChannel": "latest",
   "autoMemoryEnabled": true,
   "autoDreamEnabled": true,
-  "skipAutoPermissionPrompt": false
+  "skipWorkflowUsageWarning": true,
+  "showTurnDuration": true,
+  "skipAutoPermissionPrompt": true
 }

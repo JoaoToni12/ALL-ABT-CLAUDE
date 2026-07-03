@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-07-03
+
+Terceira major release. Foco em três eixos: **consolidação das skills n8n**, **integração RTK** (token optimization proxy), e **plugins ativos por padrão**.
+
+### Added
+
+#### RTK integration
+- `RTK.md` — documentação do Rust Token Killer (60-90% de savings em operações dev). Instalado em `~/.claude/RTK.md` e incluído via `@RTK.md` no CLAUDE.md.
+- Hook `rtk hook claude` adicionado ao `PreToolUse(Bash)` no `settings.json.template` — proxy transparente que reescreve comandos automaticamente.
+
+#### Skills (1 nova)
+- `n8n-build` — skill unificada para construção de workflows via MCP: node discovery (`search_nodes`/`get_node`), configuration patterns (resource+operation, displayOptions), validation loop com perfis (`minimal`/`runtime`/`ai-friendly`/`strict`), auto-sanitization behavior, end-to-end build cycle. Consolida e supersede 5 skills anteriores.
+
+#### Settings
+- `understand-anything@understand-anything` plugin adicionado ao template (marketplace GitHub: `Egonex-AI/Understand-Anything`).
+- `skipWorkflowUsageWarning: true` — remove aviso de workflow usage em cada sessão.
+- `showTurnDuration: true` — exibe duração de cada turn.
+- `skipAutoPermissionPrompt: true` (era `false`) — reduz interruções em auto mode.
+- Todos os 4 plugins agora `enabled: true` por padrão (era `false` em v2) — `frontend-design`, `slidev`, `n8n-as-code`, `understand-anything`.
+
+#### CLAUDE.md
+- Fable 5 adicionado ao model routing: `claude-fable-5` — tier novo, sem regra de routing estabelecida ainda.
+- Model IDs específicos documentados para Haiku/Sonnet/Opus (`claude-haiku-4-5-20251001`, `claude-sonnet-5`, `claude-opus-4-8`).
+- `@RTK.md` include adicionado ao final.
+
+### Removed
+
+#### Skills (5 removidas — consolidadas em `n8n-build`)
+- `n8n-expression-syntax` — expressões JS cobertas em `n8n-code-javascript` + `n8n-build`
+- `n8n-mcp-tools-expert` — node discovery e tool selection consolidados em `n8n-build`
+- `n8n-node-configuration` — configuration patterns consolidados em `n8n-build`
+- `n8n-validation-expert` — validation loop consolidado em `n8n-build`
+- `linear-sub-issues` — funcionalidade coberta por `linear-issue-create` + documentação Linear MCP rule
+
+---
+
 ## [2.0.0] - 2026-05-15
 
 Segunda major release. Foco em três eixos: **segurança PII para domínios regulados (LGPD)**, **guardrails MCP** para escritas destrutivas/com PII, e **alinhamento com built-ins do Claude Code** (remover redundâncias).

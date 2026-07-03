@@ -71,11 +71,12 @@ Rules when delegating:
 ### Model routing by task character
 Switch models mid-session via `/model` when the task character changes. Don't run everything on Opus.
 
-- **Haiku** — mechanical work: simple MCP lookups, JSON field validation, grep/glob navigation, git read ops, file renames, single-value fetches
-- **Sonnet** — standard implementation, most debugging, workflow edits, routine refactors
-- **Opus** — architecture, multi-step reasoning, complex cross-file debugging, novel design
+- **Haiku** (`claude-haiku-4-5-20251001`) — mechanical work: simple MCP lookups, JSON field validation, grep/glob navigation, git read ops, file renames, single-value fetches
+- **Sonnet** (current: 5, `claude-sonnet-5`) — standard implementation, most debugging, workflow edits, routine refactors
+- **Opus** (current: 4.8, `claude-opus-4-8`) — architecture, multi-step reasoning, complex cross-file debugging, novel design
+- **Fable** (`claude-fable-5`) — new tier as of mid-2026; no established routing rule yet, evaluate case by case before adopting a default use case
 
-When in doubt about the exact model ID, use `/model` to switch — the picker shows what's available. Model IDs change as new versions ship; this framework deliberately avoids hardcoding specific versions.
+When in doubt about the exact model ID, use `/model` to switch — the picker shows what's available.
 
 ### n8nac vs n8n MCP — boundary canônico
 
@@ -106,3 +107,5 @@ Moves to skill: ID tables, API endpoint catalogs, warehouse schemas, credential 
 Store the skill INSIDE the repo (`.claude/skills/...`) — version-controlled with the code, not user-level.
 
 Skip the split for small/short-lived automations — the overhead exceeds the savings.
+
+@RTK.md

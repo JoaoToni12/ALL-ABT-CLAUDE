@@ -46,6 +46,12 @@ if ((Test-Path "$ScriptDir\CLAUDE.md") -and -not (Test-Path $claudeMd)) {
 }
 Write-Host "[ok] CLAUDE.md preserved (not overwritten if exists)"
 
+# --- Copy RTK.md (overwrite — it's framework-owned, not user-customized) ------
+if (Test-Path "$ScriptDir\RTK.md") {
+    Copy-Item "$ScriptDir\RTK.md" "$ClaudeDir\RTK.md" -Force
+    Write-Host "[ok] RTK.md copied"
+}
+
 # --- Generate settings.json from template -------------------------------------
 $ClaudeFwd = $ClaudeDir -replace '\\', '/'          # forward slashes for hook commands
 $ClaudeWin = $ClaudeDir -replace '\\', '\\\\'        # double-backslash for JSON strings
@@ -63,9 +69,13 @@ Write-Host ""
 Write-Host "=== Manual steps remaining ==="
 Write-Host "1. Run 'claude auth' to authenticate with Anthropic"
 Write-Host "2. Configure MCP API keys (n8n, Linear, Notion) in ~\.claude\config.json"
-Write-Host "3. Install plugins:"
+Write-Host "3. Install RTK (Rust Token Killer) for token optimization:"
+Write-Host "     https://github.com/JoaoToni12/rtk — follow install instructions"
+Write-Host "4. Install plugins:"
 Write-Host "     claude plugin marketplace add EtienneLescot/n8n-as-code"
 Write-Host "     claude plugin install n8n-as-code@n8nac-marketplace"
-Write-Host "4. Copy project-level CLAUDE.md to each repo as needed"
+Write-Host "     claude plugin marketplace add Egonex-AI/Understand-Anything"
+Write-Host "     claude plugin install understand-anything@understand-anything"
+Write-Host "5. Copy project-level CLAUDE.md to each repo as needed"
 Write-Host ""
 Write-Host "Done! Framework installed to $ClaudeDir"

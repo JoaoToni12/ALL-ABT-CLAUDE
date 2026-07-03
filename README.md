@@ -2,19 +2,21 @@
 
 Setup padronizado de Claude Code para times de AI Builders / automação. Provê hooks de segurança, agentes, skills e regras que aceleram o desenvolvimento de workflows n8n + Snowflake/data + Linear/Notion/GitLab sem comprometer disciplina de PII, secrets e revisão.
 
-**v2.0.0** — segunda major. Inclui upgrade para n8nac v2, hooks de PII para domínios regulados (LGPD), guardrails MCP, profile `paranoid`, e remoção de redundâncias com built-ins do Claude Code.
+**v3.0.0** — terceira major. Consolida 5 skills n8n em `n8n-build`, integra RTK token proxy, adiciona plugin `understand-anything`, e ativa todos os plugins por padrão.
 
 ## Visão Geral
 
 Framework configura Claude Code com um conjunto integrado de **regras, hooks, agentes, skills e plugins** que garantem qualidade, segurança e produtividade. Tudo vive em `~/.claude/` e é compartilhado entre todos os projetos.
 
-**Números do setup atual (v2.0.0):**
+**Números do setup atual (v3.0.0):**
 - **13 arquivos de regras** contextuais (rules/) com glob scoping
 - **14 hooks** de segurança e qualidade (incluindo SessionStart, UserPromptSubmit, guards MCP)
 - **3 agentes custom** com model selection (built-ins do Claude Code cobrem code-reviewer/security-reviewer/general-purpose)
-- **28 skills** domain-specific
+- **24 skills** domain-specific
 - **10 slash commands**
 - **4 profiles de hook**: `minimal`, `standard`, `strict`, `paranoid`
+- **4 plugins ativos** por padrão: `frontend-design`, `slidev`, `n8n-as-code`, `understand-anything`
+- **RTK** (Rust Token Killer) — proxy de token optimization (60-90% savings em dev ops)
 - Sistema de memória persistente entre sessões
 
 ## Estrutura
@@ -27,30 +29,27 @@ Framework configura Claude Code com um conjunto integrado de **regras, hooks, ag
 ├── hooks/                             # 14 hooks de segurança/qualidade
 ├── commands/                          # 10 slash commands
 ├── agents/                            # 3 agentes custom (planner, build-error-resolver, verify-automation)
-├── skills/                            # 27 skills domain-specific
+├── RTK.md                             # RTK token proxy documentation
+├── skills/                            # 24 skills domain-specific
 ├── plugins/                           # 3 plugins via marketplace (n8nac v2, slidev, frontend-design)
 └── projects/<projeto>/memory/         # Memória persistente por projeto
 ```
 
-### Mudanças v1 → v2 (resumo)
+### Mudanças v2 → v3 (resumo)
 
 **Adicionado:**
-- Hooks MCP: `pre-mcp-destructive.js`, `pre-mcp-pii-warn.js`, `pre-user-prompt-pii.js`
-- Rules: `pii-handling`, `linear-mcp`, `gitlab-mcp`, `slack-safety`, `bash-json-safety`, `communication-protocol`, `live-first-verification`, `output-budgeting`
-- Skills: `close-project` (absorvido session-close), `linear-issue-create`, `linear-sub-issues`, `n8n-execution-debug`, `snowflake-query`
-- Profile `paranoid` para sessões com dados regulados
-- `permissions.deny` em settings.json para Read em paths sensíveis (.env, .ssh, .aws, .npmrc, etc.)
-- Suporte n8nac v2.x (environments, `workspace migrate`, `setup`, `promote`)
+- `RTK.md` — Rust Token Killer documentation; `@RTK.md` include no CLAUDE.md; hook `rtk hook claude` no PreToolUse(Bash)
+- Skill `n8n-build` — node discovery + configuration + validation loop consolidados em um único skill
+- Plugin `understand-anything` (Egonex-AI/Understand-Anything) no settings template
+- Fable 5 no model routing table; model IDs específicos para todos os tiers
+- Settings: `skipWorkflowUsageWarning`, `showTurnDuration`, `skipAutoPermissionPrompt: true`
 
 **Removido:**
-- Agents redundantes com built-ins: `code-reviewer`, `security-reviewer`, `doc-updater`
-- Commands redundantes: `build-fix` (use agent `build-error-resolver`), `verify-workflow` (use agent `verify-automation`)
+- Skills consolidadas em `n8n-build`: `n8n-expression-syntax`, `n8n-mcp-tools-expert`, `n8n-node-configuration`, `n8n-validation-expert`, `linear-sub-issues`
 
 **Atualizado:**
-- `pre-sensitive-files.js`: 16+ regex de vendor keys (Anthropic, OpenAI, Linear, Notion, Slack, GitLab, GitHub, AWS) + 14 extensões sensíveis
-- `pre-git-push-guard.js`: cobre `--force-with-lease`, refspec `+`, `--mirror`, `--delete`; bloqueia push a `prod\|production\|release\|staging` além de `main\|master`
-- `session-context-inject.js`: migrado de PreToolUse-com-marker para evento nativo `SessionStart`
-- `post-auto-format.js`: lazy — pula se projeto não tem prettier configurado
+- Todos os 4 plugins agora `enabled: true` por padrão (era `false` em v2)
+- Quick Start inclui passo de instalação do RTK e plugin `understand-anything`
 
 ## Quick Start
 
@@ -84,20 +83,31 @@ cd /tmp/claude-framework
 
 O script copia `CLAUDE.md`, `rules/`, `hooks/`, `commands/`, `agents/`, `skills/` para `~/.claude/` e renderiza `settings.json.template` → `~/.claude/settings.json` com seus paths. Cria backup de qualquer config existente em `~/.claude/<file>.bak.<timestamp>`.
 
-### 4. Instalar plugins
+### 4. Instalar RTK (token optimization)
+
+```bash
+# Instalar Rust Token Killer — ver README do projeto para instruções completas
+# https://github.com/JoaoToni12/rtk
+```
+
+RTK reescreve comandos automaticamente via hook. Após instalar, o hook `rtk hook claude` já está configurado no `settings.json`.
+
+### 5. Instalar plugins
 
 ```
 /plugin marketplace add EtienneLescot/n8n-as-code
 /plugin install n8n-as-code@n8nac-marketplace
 /plugin install frontend-design@claude-plugins-official
 /plugin install slidev@slidev-dev-marketplace
+/plugin marketplace add Egonex-AI/Understand-Anything
+/plugin install understand-anything@understand-anything
 ```
 
-### 5. Configurar MCP Servers
+### 6. Configurar MCP Servers
 
 Ver seção [Configuração de MCP Servers](#configuração-de-mcp-servers).
 
-### 6. Ativar profile paranoid (se tocar PII)
+### 7. Ativar profile paranoid (se tocar PII)
 
 ```powershell
 $env:CLAUDE_HOOK_PROFILE = "paranoid"
@@ -188,16 +198,17 @@ Rules contextuais (`~/.claude/rules/`) carregam via glob:
 
 **Built-ins do Claude Code usados sem override:** `code-reviewer`, `security-reviewer`, `Plan`, `Explore`, `general-purpose`.
 
-### Skills (28 packages)
+### Skills (24 packages)
 
 | Categoria | Skills |
 |---|---|
 | **Workflow** | `close-project`, `compact-memory`, `onboard`, `prd-writer`, `repo-initialize`, `cost-report` |
-| **n8n autoria** | `deploy-n8n-workflow`, `rollback-n8n-workflow`, `safe-update-n8n`, `sync-n8n-workflow`, `n8n-code-javascript`, `n8n-code-python`, `n8n-expression-syntax`, `n8n-node-configuration`, `n8n-workflow-patterns` |
-| **n8n diagnostics** | `n8n-execution-debug`, `n8n-mcp-tools-expert`, `n8n-validation-expert` |
+| **n8n build** | `n8n-build` (node discovery + configuration + validation — consolida 5 skills anteriores) |
+| **n8n autoria** | `deploy-n8n-workflow`, `rollback-n8n-workflow`, `safe-update-n8n`, `sync-n8n-workflow`, `n8n-code-javascript`, `n8n-code-python`, `n8n-workflow-patterns` |
+| **n8n diagnostics** | `n8n-execution-debug` |
 | **n8n testing** | `n8n-workflow-testing-fundamentals`, `n8n-integration-testing-patterns`, `n8n-trigger-testing-strategies` |
 | **QA** | `context-driven-testing`, `qe-iterative-loop`, `qe-quality-assessment`, `qe-requirements-validation` |
-| **MCP writes** | `linear-issue-create`, `linear-sub-issues`, `snowflake-query` |
+| **MCP writes** | `linear-issue-create`, `snowflake-query` |
 
 ### Plugins
 
@@ -205,7 +216,10 @@ Rules contextuais (`~/.claude/rules/`) carregam via glob:
 |---|---|---|
 | `frontend-design` | claude-plugins-official | Interfaces frontend production-grade |
 | `slidev` | slidev-dev-marketplace | Apresentações Slidev |
-| `n8n-as-code` | n8nac-marketplace (GitHub) | n8nac v2 + schema completo de 537+ nós n8n |
+| `n8n-as-code` | n8nac-marketplace (GitHub: EtienneLescot/n8n-as-code) | n8nac v2 + schema completo de 537+ nós n8n |
+| `understand-anything` | understand-anything (GitHub: Egonex-AI/Understand-Anything) | Análise e knowledge graph de codebases |
+
+Todos os 4 plugins ficam `enabled: true` no template. Requer instalação manual via `/plugin marketplace add` (ver Quick Start).
 
 ---
 
